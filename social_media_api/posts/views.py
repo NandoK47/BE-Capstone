@@ -34,10 +34,24 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class FeedView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = PostSerializer
 
-    def get(self, request):
-        following_users = request.user.following.all()
+    def get_queryset(self):
+        queryset = Post.objects.filter(user__id__in=following_users).order_by('-created_at')
+        following_users = following_users.objects.filter(follower=self.request.user).values_list('following', flat=True)
         posts = Post.objects.filter(author__in=following_users).order_by()
+        
+        keyword = self.request.query_params.get('keyword')
+        if keyword:
+            queryset = queryset.filter(content__icontains=keyword)
+            
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        if start_date and end_date:
+            queryset = queryset.filter(created_at__range=[start_date, end_date])
+
+        return queryset
+        
         data = [{"author": post.author.username, "title": post.title, "content": post.content, "created_at": post.created_at} for post in posts]
         return Response(data, 'status=status'.HTTP_200_OK)
 

@@ -9,16 +9,15 @@ from .serializers import CustomUserSerializer, RegisterSerializer
 from rest_framework import status, generics, permissions
 
 
-
-class RegisteView(APIView):
+class RegisterView(APIView):
+    
     permission_classes = [AllowAny]
-
+    
     def post(self, request):
-        serializer = CustomUserSerializer(data=request.data)
+        serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+            return Response({"message": "User created successfully."}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
@@ -45,10 +44,9 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CustomUserSerializer  # Use the UserSerializer
     permission_classes = [permissions.IsAuthenticated]  # Only authenticated users can access
     
-    
-
 
 class FollowUserView(generics.GenericAPIView):
+    
     permission_classes = ["permissions.IsAuthenticated"]
 
     def post(self, request, *args, **kwargs):
@@ -63,6 +61,7 @@ class FollowUserView(generics.GenericAPIView):
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class UnfollowUserView(generics.GenericAPIView):
+    
     permission_classes = ["permissions.IsAuthenticated"]
 
     def post(self, request, *args, **kwargs):
@@ -74,11 +73,3 @@ class UnfollowUserView(generics.GenericAPIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         
-        
-class RegisterView(APIView):
-    def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({"message": "User created successfully."}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
